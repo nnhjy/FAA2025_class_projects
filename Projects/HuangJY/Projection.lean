@@ -1,10 +1,7 @@
 import Projects.HuangJY.Common
 import Projects.HuangJY.Polyhedron
 
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Set.Lattice
-import Mathlib.Analysis.Convex.Basic
 
 /- # Projection machineries
 - We work with vectors `x` as functions `Fin n → ℝ`.
