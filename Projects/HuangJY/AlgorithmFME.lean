@@ -65,7 +65,6 @@ producing a set in `ℝ^n`. -/
 
 end FourierMotzkinSet
 
-
 namespace FourierMotzkin
 
 /-! ## Indices partition (Algorithm 1 Step 2) -/
@@ -211,7 +210,7 @@ end FourierMotzkin
 
 /-! # Fourier–Motzkin elimination correctness theorem -/
 
-/-! ## Helper lemmas for the correctness proof -/
+/-! ## Helper lemmas for the correctness of single FME -/
 
 /- Extension lemma: given `y ∈ ℝ^(n-1)` and `xₙ ∈ ℝ`, construct `x ∈ ℝ^n` -/
 def extendVector {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ) : Fin n → ℝ :=
@@ -937,7 +936,7 @@ lemma Q_constraint_characterization {m n : Nat} (hn : n > 0) (P : Polyhedron m n
       exact h_zero_conds i_zero hi_zero
 
 
-/-! ## Main correctness theorem -/
+/-! # Main correctness theorems -/
 
 /- **Theorem 1: Correctness of one Fourier-Motzkin elimination cycle**
 
@@ -1000,15 +999,136 @@ theorem correct_FourierMotzkin_cycle {m n : Nat} (hn : n > 0) (P : Polyhedron m 
       exact derive_FM_inequality hn (P.A i_pos) (P.A i_neg) (P.b i_pos) (P.b i_neg)
         x y hyx' hx_pos hx_neg h_pos h_neg
 
-/- **Correctness of iterated Fourier-Motzkin elimination**
+/-! ## Helper lemmas for projection composition -/
+
+/-- Projection composition: projecting from n to k equals projecting from n to n-1 then from n-1 to k -/
+lemma proj_comp {k n : Nat} (hk : k ≤ n) (x : Fin (n + 1) → ℝ) :
+    proj k (n + 1) (Nat.le_succ_of_le hk) x = proj k n hk (proj n (n + 1) (Nat.le_succ n) x) := by
+  funext i
+  simp only [proj]
+  have hi : i.val < n := Nat.lt_of_lt_of_le i.isLt hk
+  rfl
+
+/-- Set projection composition -/
+lemma setProj_comp {k n : Nat} (hk : k ≤ n) (S : Set (Fin (n + 1) → ℝ)) :
+    setProj k (n + 1) (Nat.le_succ_of_le hk) S = setProj k n hk (setProj n (n + 1) (Nat.le_succ n) S) := by
+  ext y
+  simp only [setProj]
+  constructor
+  · rintro ⟨x, hxS, rfl⟩
+    use proj n (n + 1) (Nat.le_succ n) x
+    constructor
+    · exact ⟨x, hxS, rfl⟩
+    · exact proj_comp hk x
+  · rintro ⟨z, ⟨x, hxS, rfl⟩, rfl⟩
+    use x
+    constructor
+    · exact hxS
+    · exact (proj_comp hk x).symm
+
+/-- Polyhedron projection composition -/
+lemma polyhedronProj_comp {m k n : Nat} (hk : k ≤ n) (P : Polyhedron m (n + 1)) :
+    polyhedronProj (Nat.le_succ_of_le hk) P =
+    polyhedronProj hk (FourierMotzkin.eliminationCycle (Nat.succ_pos n) P).2 := by
+  simp only [polyhedronProj]
+  rw [setProj_comp hk]
+  congr 1
+  have h_cycle := correct_FourierMotzkin_cycle (Nat.succ_pos n) P
+  simp only [polyhedronProj] at h_cycle
+  exact h_cycle.symm
+
+/- **Theorem 2: Correctness of iterated Fourier-Motzkin elimination**
 
   The carrier of the resulting polyhedron equals the projection of P onto the first k coordinates.
 -/
 theorem correct_FourierMotzkin_iteration {m n k : Nat} (h : k ≤ n) (P : Polyhedron m n) :
-  let ⟨m', Q⟩ := FourierMotzkin.eliminationIteration h P
+  let ⟨_, Q⟩ := FourierMotzkin.eliminationIteration h P
   Q.carrier = polyhedronProj h P := by
-  sorry
-
+  induction n generalizing m k with
+  | zero =>
+    have hk : k = 0 := Nat.eq_zero_of_le_zero h
+    subst hk
+    -- For n = 0, the polyhedron has dimension 0
+    -- Pattern match on the result of eliminationIteration
+    match hQ : FourierMotzkin.eliminationIteration h P with
+    | ⟨m', Q⟩ =>
+      -- By definition of eliminationIteration for n = 0, m' = m and Q = P (with cast)
+      simp only [FourierMotzkin.eliminationIteration] at hQ
+      -- hQ : ⟨m, h' ▸ P⟩ = ⟨m', Q⟩ where h' : 0 = 0
+      have hm' : m' = m := by simp at hQ ⊢; omega
+      subst hm'
+      simp only [polyhedronProj, setProj]
+      ext y
+      simp only [Set.mem_setOf_eq, Polyhedron.carrier]
+      constructor
+      · intro hy
+        use y
+        constructor
+        · intro i
+          simp only [Finset.univ_eq_empty, Finset.sum_empty]
+          have hy_i := hy i
+          simp only [Finset.univ_eq_empty, Finset.sum_empty] at hy_i
+          convert hy_i using 1
+          congr 1
+          simp at hQ
+          cases hQ
+          rfl
+        · simp_all; funext i; exact i.elim0
+      · intro ⟨x, hx, hxy⟩ i
+        simp only [Finset.univ_eq_empty, Finset.sum_empty]
+        have hx_i := hx i
+        simp only [Finset.univ_eq_empty, Finset.sum_empty] at hx_i
+        convert hx_i using 1
+        congr 1
+        simp at hQ
+        cases hQ
+        rfl
+  | succ n' ih =>
+    by_cases hk : k = n' + 1
+    · -- k = n' + 1, no elimination needed
+      subst hk
+      -- Pattern match on the result of eliminationIteration
+      match hQ : FourierMotzkin.eliminationIteration h P with
+      | ⟨m', Q⟩ =>
+        -- By definition of eliminationIteration for k = n' + 1, m' = m and Q = P (with cast)
+        simp only [FourierMotzkin.eliminationIteration, ↓reduceDIte] at hQ
+        have hm' : m' = m := by simp at hQ ⊢; omega
+        subst hm'
+        simp only [polyhedronProj, setProj]
+        ext y
+        simp only [Set.mem_setOf_eq, Polyhedron.carrier]
+        constructor
+        · intro hy
+          use y
+          constructor
+          · intro i
+            have hy_i := hy i
+            convert hy_i using 2 <;> (congr 1; simp at hQ; cases hQ; rfl)
+          · simp_all; funext i; simp
+        · intro ⟨x, hx, hxy⟩ i
+          have hx_i := hx i
+          convert hx_i using 2 <;> (congr 1; simp at hQ; cases hQ; rfl)
+          simp_all
+    · -- k < n' + 1, need to eliminate
+      have h_pos : n' + 1 > 0 := Nat.succ_pos n'
+      have h_le : k ≤ n' := Nat.lt_succ_iff.mp (Nat.lt_of_le_of_ne h hk)
+      -- Pattern match on the result of eliminationIteration
+      match hQ : FourierMotzkin.eliminationIteration h P with
+      | ⟨m', Q⟩ =>
+        -- For k < n' + 1, eliminationIteration first does one cycle then recurses
+        simp only [FourierMotzkin.eliminationIteration, hk, ↓reduceDIte] at hQ
+        -- The goal is: Q.carrier = polyhedronProj h P
+        show Q.carrier = polyhedronProj h P
+        -- First, Q.carrier = (eliminationIteration h_le (eliminationCycle h_pos P).snd).snd.carrier
+        have hQ_eq : Q.carrier = (FourierMotzkin.eliminationIteration h_le (FourierMotzkin.eliminationCycle h_pos P).snd).snd.carrier := by
+          conv_lhs => rw [← congrArg (fun x => x.snd.carrier) hQ]
+        rw [hQ_eq]
+        -- Apply IH
+        have ih_applied := ih h_le (FourierMotzkin.eliminationCycle h_pos P).snd
+        simp only at ih_applied
+        rw [ih_applied]
+        -- Use polyhedronProj_comp
+        exact (polyhedronProj_comp h_le P).symm
 
 -- For computable version: try ℚ, then lift to ℝ in analysis
 -- FiniteField
