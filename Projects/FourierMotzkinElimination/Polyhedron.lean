@@ -1,4 +1,4 @@
-import Projects.HuangJY.Common
+import Projects.FourierMotzkinElimination.Common
 
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Matrix.Basic
@@ -33,7 +33,7 @@ lemma memPolyhedron_iff {m n : ℕ} (P : Polyhedron m n) (x : Fin n → ℝ) :
 - directly within the `structure Polyhedron`,
   since structure fields are not computed properties,
   but data that must be provided when constructing instances.
-- See the `alt` example below.
+- See an alternative example below.
 structure Polyhedron_alt (m n : Nat) where
   A : Matrix (Fin m) (Fin n) ℝ
   b : Fin m → ℝ

@@ -1,5 +1,5 @@
-import Projects.HuangJY.Common
-import Projects.HuangJY.Polyhedron
+import Projects.FourierMotzkinElimination.Common
+import Projects.FourierMotzkinElimination.Polyhedron
 
 import Mathlib.Data.Set.Lattice
 

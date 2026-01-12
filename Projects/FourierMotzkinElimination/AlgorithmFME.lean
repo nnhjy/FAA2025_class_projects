@@ -1,6 +1,6 @@
-import Projects.HuangJY.Common
-import Projects.HuangJY.Polyhedron
-import Projects.HuangJY.Projection
+import Projects.FourierMotzkinElimination.Common
+import Projects.FourierMotzkinElimination.Polyhedron
+import Projects.FourierMotzkinElimination.Projection
 
 -- import Mathlib.Data.Finset.Defs
 import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Basic
