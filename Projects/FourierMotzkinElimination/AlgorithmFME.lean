@@ -1135,7 +1135,3 @@ theorem correct_FourierMotzkin_iteration {m n k : Nat} (h : k ≤ n) (P : Polyhe
         rw [ih_applied]
         -- Use polyhedronProj_comp
         exact (polyhedronProj_comp h_le P).symm
-
--- For computable version:
--- (1) try `ℚ`, then lift to `ℝ` in analysis, or
--- (2) work with `FiniteField`
