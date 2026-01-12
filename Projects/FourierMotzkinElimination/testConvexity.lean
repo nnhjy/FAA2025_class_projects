@@ -1,6 +1,6 @@
-import Projects.HuangJY.Common
-import Projects.HuangJY.Polyhedron
-import Projects.HuangJY.Projection
+import Projects.FourierMotzkinElimination.Common
+import Projects.FourierMotzkinElimination.Polyhedron
+import Projects.FourierMotzkinElimination.Projection
 
 /- # Polyhedron is convex
 For any polyhedron `P`, its `carrier set` is convex in the sense of Mathlib's Convex definition.
