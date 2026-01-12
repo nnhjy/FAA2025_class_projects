@@ -2,14 +2,13 @@ import Projects.FourierMotzkinElimination.Common
 import Projects.FourierMotzkinElimination.Polyhedron
 import Projects.FourierMotzkinElimination.Projection
 
--- import Mathlib.Data.Finset.Defs
 import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Basic
 import Mathlib.Algebra.Order.Field.Basic
 
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Data.Real.Archimedean
 
-/-! # Fourier–Motzkin elimination -/
+/- # Fourier–Motzkin Elimination (FME) algorithm -/
 
 /- Drops the coordinate `ℓ : Fin (n+1)`:
 it maps `Fin n` into `Fin (n+1)` skipping `ℓ`. -/
@@ -21,7 +20,11 @@ it maps `Fin n` into `Fin (n+1)` skipping `ℓ`. -/
 --   Fin.succAboveEmb ℓ
 
 namespace FourierMotzkinSet
-/- **Fourier-Motzkin Elimination: set output** -/
+/- ## Naive Fourier-Motzkin Elimination procedure
+  - Input: a `Polyhedron`
+  - Output: a `Set` of index
+  - Only for FME procedure demo, not for correctness analysis
+-/
 
 /- Positive-index set for the column `ℓ`: constraints with `A i ℓ > 0`. -/
 @[simp,grind] def Ipos {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) : Set (Fin m) :=
@@ -66,10 +69,11 @@ producing a set in `ℝ^n`. -/
 end FourierMotzkinSet
 
 namespace FourierMotzkin
+/- ## Formal Fourier-Motzkin Elimination procedure
+  - Input and output are both a `Polyhedron`
+-/
 
-/-! ## Indices partition (Algorithm 1 Step 2) -/
-
-/- **Partition indices based on coefficient of last variable** -/
+/- **Indices partition based on coefficient of last variable (Algorithm 1 Step 2)** -/
 @[simp,grind]
 noncomputable
 def partitionIndices {m n : Nat} (hn : n > 0) (P : Polyhedron m n) :
@@ -88,9 +92,7 @@ def partitionIndices {m n : Nat} (hn : n > 0) (P : Polyhedron m n) :
     exact Nat.lt_trans h1 h2
   ⟩
 
-/-! ## Fourier-Motzkin Elimination (Algorithm 1) -/
-
-/- **Eliminate xₙ to project from n to n-1 dimensions**
+/- **Main step: eliminate xₙ to project from n to n-1 dimensions (Algorithm 1)**
   Given polyhedron P in ℝ^n defined by constraints:
     ∑_{j=1}^n a_{ij} x_j ≥ b_i, ∀ i ∈ [m]
 
@@ -188,7 +190,7 @@ def eliminationCycle {m n : Nat} (hn : n > 0) (P : Polyhedron m n) :
         else 0
   }⟩
 
-/- **Iterated Fourier-Motzkin Elimination: project from n to k dimensions** -/
+/- **Iteration step: project from n to k dimensions** -/
 noncomputable
 def eliminationIteration {m n k : Nat} (h : k ≤ n) (P : Polyhedron m n) :
   Σ m' : Nat, Polyhedron m' k :=
@@ -208,11 +210,11 @@ def eliminationIteration {m n k : Nat} (h : k ≤ n) (P : Polyhedron m n) :
 
 end FourierMotzkin
 
-/-! # Fourier–Motzkin elimination correctness theorem -/
+/- # Fourier–Motzkin Elimination correctness -/
 
-/-! ## Helper lemmas for the correctness of single FME -/
+/- ## Helper definitions and lemmas -/
 
-/- Extension lemma: given `y ∈ ℝ^(n-1)` and `xₙ ∈ ℝ`, construct `x ∈ ℝ^n` -/
+/- **Verctor extension**: given `y ∈ ℝ^(n-1)` and `xₙ ∈ ℝ`, construct `x = ⟨y, xₙ⟩ ∈ ℝ^n` -/
 def extendVector {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ) : Fin n → ℝ :=
   fun i ↦
     let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
@@ -226,6 +228,13 @@ def extendVector {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ) :
         contradiction
       y ⟨i.val, hi⟩
 
+/- The last element of an extended vector -/
+lemma extendVector_last {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ) :
+  let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
+  extendVector hn y xₙ lastIdx = xₙ := by
+  simp [extendVector]
+
+/- **Correctness of the extended vector projection** -/
 lemma extendVector_proj {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ) :
   let h : n - 1 ≤ n := Nat.sub_le n 1
   proj (n - 1) n h (extendVector hn y xₙ) = y := by
@@ -244,14 +253,25 @@ lemma extendVector_proj {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ :
     omega
   simp_all
 
-lemma extendVector_last {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ) :
-  let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
-  extendVector hn y xₙ lastIdx = xₙ := by
-  simp [extendVector]
+/- Helper: extendVector preserves y values on first n-1 coordinates -/
+lemma extendVector_apply_embedPred {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ)
+    (j : Fin (n - 1)) :
+  extendVector hn y xₙ (FourierMotzkin.Fin.embedPred hn j) = y j := by
+  simp only [extendVector, FourierMotzkin.Fin.embedPred]
+  have hj_lt_n : j.val < n := Nat.lt_of_lt_of_le j.isLt (Nat.sub_le n 1)
+  have hne : (⟨j.val, hj_lt_n⟩ : Fin n) ≠ ⟨n - 1, Nat.sub_lt hn (by omega)⟩ := by
+    intro heq
+    have hval : j.val = n - 1 := by
+      have := congr_arg Fin.val heq
+      simp at this
+      exact this
+    have hlt : j.val < n - 1 := j.isLt
+    omega
+  simp only [dif_neg hne]
 
-/-! ## Helper lemmas for working with constraints -/
+/- **Helper lemmas for working with constraints** -/
 
-/-- Split a sum over Fin n into first n-1 coordinates and the last one -/
+/- Split a sum over `Fin n` into first `n-1` coordinates and the last one -/
 lemma sum_split_last {n : Nat} (hn : n > 0) (f : Fin n → ℝ) :
   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
   ∑ j : Fin n, f j = (∑ j : Fin (n-1), f (FourierMotzkin.Fin.embedPred hn j)) + f lastIdx := by
@@ -264,14 +284,14 @@ lemma sum_split_last {n : Nat} (hn : n > 0) (f : Fin n → ℝ) :
     rw [Fin.sum_univ_castSucc]
     congr 1
 
-/-- When the last coefficient is 0, the sum equals the sum over first n-1 coords -/
+/- When the last coefficient is 0, the sum equals the sum over first n-1 coords -/
 lemma sum_with_zero_last {n : Nat} (hn : n > 0) (a : Fin n → ℝ) (x : Fin n → ℝ)
     (h_zero : a ⟨n - 1, Nat.sub_lt hn (by omega)⟩ = 0) :
   ∑ j : Fin n, a j * x j = ∑ j : Fin (n-1), a (FourierMotzkin.Fin.embedPred hn j) * x (FourierMotzkin.Fin.embedPred hn j) := by
   rw [sum_split_last hn]
   simp [h_zero]
 
-/-- Relationship between x and y = proj x on the first n-1 coordinates -/
+/- Relationship between x and y = proj x on the first n-1 coordinates -/
 lemma proj_apply_embedPred {n : Nat} (hn : n > 0) (x : Fin n → ℝ) (j : Fin (n-1)) :
   let h : n - 1 ≤ n := Nat.sub_le n 1
   proj (n - 1) n h x j = x (FourierMotzkin.Fin.embedPred hn j) := by
@@ -282,11 +302,13 @@ lemma proj_apply_embedPred {n : Nat} (hn : n > 0) (x : Fin n → ℝ) (j : Fin (
     simp [Fin.castLEEmb, FourierMotzkin.Fin.embedPred]
   simp_all
 
-/-- Fourier-Motzkin inequality of the pair-wise constraints
-Base form:
-For each pair (i₊, i₋) ∈ I₊ × I₋:
-      (b_{i₋} - ∑_{j=1}^{n-1} a_{i₋,j} · x_j) / a_{i₋,n} ≥
-      (b_{i₊} - ∑_{j=1}^{n-1} a_{i₊,j} · x_j) / a_{i₊,n}
+/- **Constraint relationships** -/
+
+/- Fourier-Motzkin inequality of the pair-wise constraints
+- Base form:
+  For each pair (i₊, i₋) ∈ I₊ × I₋,
+        (b_{i₋} - ∑_{j=1}^{n-1} a_{i₋,j} · x_j) / a_{i₋,n} ≥
+        (b_{i₊} - ∑_{j=1}^{n-1} a_{i₊,j} · x_j) / a_{i₊,n}
 -/
 lemma derive_FM_inequality_base {n : Nat} (hn : n > 0)
     (a_pos a_neg : Fin n → ℝ) (b_pos b_neg : ℝ)
@@ -354,11 +376,11 @@ lemma derive_FM_inequality_base {n : Nat} (hn : n > 0)
   simp_all only [FourierMotzkin.Fin.embedPred, ge_iff_le, gt_iff_lt, a_pos_n, lastIdx, xₙ, a_neg_n]
   linarith
 
-/-- Fourier-Motzkin inequality of the pair-wise constraints
-Convenient form:
-For each pair (i₊, i₋) ∈ I₊ × I₋:
-      ∑_{j=1}^{n-1} (a_{i₊,n}·a_{i₋,j} - a_{i₋,n}·a_{i₊,j}) x_j
-      ≥ a_{i₊,n}·b_{i₋} - a_{i₋,n}·b_{i₊}
+/- Fourier-Motzkin inequality of the pair-wise constraints
+- Convenient form:
+  For each pair (i₊, i₋) ∈ I₊ × I₋,
+        ∑_{j=1}^{n-1} (a_{i₊,n}·a_{i₋,j} - a_{i₋,n}·a_{i₊,j}) x_j
+        ≥ a_{i₊,n}·b_{i₋} - a_{i₋,n}·b_{i₊}
 -/
 lemma derive_FM_inequality {n : Nat} (hn : n > 0)
     (a_pos a_neg : Fin n → ℝ) (b_pos b_neg : ℝ)
@@ -419,9 +441,9 @@ lemma derive_FM_inequality {n : Nat} (hn : n > 0)
   exact derive_FM_inequality_base hn a_pos a_neg b_pos b_neg
         x y hyx h_pos_constraint h_neg_constraint h_pos_n h_neg_n
 
-/-! ## Core lemma 2: find feasible xₙ -/
+/- **Lemmas for indices partition** -/
 
-/-- Helper: membership in partition sets gives us the coefficient sign -/
+/- Helper: membership in partition sets gives us the coefficient sign -/
 lemma mem_partition_trichotomy {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
   (P.A i lastIdx > 0) ∨ (P.A i lastIdx < 0) ∨ (P.A i lastIdx = 0) := by
@@ -434,28 +456,28 @@ lemma mem_partition_trichotomy {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i 
       push_neg at h1 h2
       linarith
 
-/-- Helper: i is in I_pos iff coefficient is positive -/
+/- Helper: i is in I_pos iff coefficient is positive -/
 lemma mem_I_pos_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
   let (I_pos, _, _) := FourierMotzkin.partitionIndices hn P
   i ∈ I_pos ↔ P.A i lastIdx > 0 := by
   simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
 
-/-- Helper: i is in I_neg iff coefficient is negative -/
+/- Helper: i is in I_neg iff coefficient is negative -/
 lemma mem_I_neg_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
   let (_, I_neg, _) := FourierMotzkin.partitionIndices hn P
   i ∈ I_neg ↔ P.A i lastIdx < 0 := by
   simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
 
-/-- Helper: i is in I_zero iff coefficient is zero -/
+/- Helper: i is in I_zero iff coefficient is zero -/
 lemma mem_I_zero_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
   let (_, _, I_zero) := FourierMotzkin.partitionIndices hn P
   i ∈ I_zero ↔ P.A i lastIdx = 0 := by
   simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
 
-/-- Helper: partition sets are disjoint and cover all indices -/
+/- Helper: partition sets are disjoint and cover all indices -/
 lemma partition_complete {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
   let (I_pos, I_neg, I_zero) := FourierMotzkin.partitionIndices hn P
@@ -465,23 +487,8 @@ lemma partition_complete {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin 
   simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
   exact ⟨id, id, id⟩
 
-/-- Helper: extendVector preserves y values on first n-1 coordinates -/
-lemma extendVector_apply_embedPred {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ)
-    (j : Fin (n - 1)) :
-  extendVector hn y xₙ (FourierMotzkin.Fin.embedPred hn j) = y j := by
-  simp only [extendVector, FourierMotzkin.Fin.embedPred]
-  have hj_lt_n : j.val < n := Nat.lt_of_lt_of_le j.isLt (Nat.sub_le n 1)
-  have hne : (⟨j.val, hj_lt_n⟩ : Fin n) ≠ ⟨n - 1, Nat.sub_lt hn (by omega)⟩ := by
-    intro heq
-    have hval : j.val = n - 1 := by
-      have := congr_arg Fin.val heq
-      simp at this
-      exact this
-    have hlt : j.val < n - 1 := j.isLt
-    omega
-  simp only [dif_neg hne]
-
-/-- Given y satisfying Q's constraints, find bounds on the last coordinate xₙ -/
+/- ## Core helper lemma 1 -/
+/- Given y satisfying Q's constraints, find bounds on the last coordinate xₙ -/
 lemma find_feasible_xn {m n : Nat} (hn : n > 0) (P : Polyhedron m n)
     (y : Fin (n - 1) → ℝ) :
   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
@@ -785,7 +792,8 @@ lemma find_feasible_xn {m n : Nat} (hn : n > 0) (P : Polyhedron m n)
         rw [h_inner]
         exact h_zero i h_zero_coeff
 
-/-- Simplify Q's constraints in terms of the partition -/
+/- ## Core helper lemma 2 -/
+/- Simplify Q's constraints in terms of the partition -/
 lemma Q_constraint_characterization {m n : Nat} (hn : n > 0) (P : Polyhedron m n)
     (y : Fin (n - 1) → ℝ) :
   let ⟨m', Q⟩ := FourierMotzkin.eliminationCycle hn P
@@ -936,10 +944,9 @@ lemma Q_constraint_characterization {m n : Nat} (hn : n > 0) (P : Polyhedron m n
       exact h_zero_conds i_zero hi_zero
 
 
-/-! # Main correctness theorems -/
+/- ## Main theorems -/
 
-/- **Theorem 1: Correctness of one Fourier-Motzkin elimination cycle**
-
+/- **Theorem 1: Correctness of single Fourier-Motzkin Elimination cycle**
   The carrier of Q equals the projection of P onto the first (n-1) coordinates.
 -/
 theorem correct_FourierMotzkin_cycle {m n : Nat} (hn : n > 0) (P : Polyhedron m n) :
@@ -999,7 +1006,7 @@ theorem correct_FourierMotzkin_cycle {m n : Nat} (hn : n > 0) (P : Polyhedron m 
       exact derive_FM_inequality hn (P.A i_pos) (P.A i_neg) (P.b i_pos) (P.b i_neg)
         x y hyx' hx_pos hx_neg h_pos h_neg
 
-/-! ## Helper lemmas for projection composition -/
+/- **Helper lemmas for projection composition** -/
 
 /-- Projection composition: projecting from n to k equals projecting from n to n-1 then from n-1 to k -/
 lemma proj_comp {k n : Nat} (hk : k ≤ n) (x : Fin (n + 1) → ℝ) :
@@ -1037,8 +1044,7 @@ lemma polyhedronProj_comp {m k n : Nat} (hk : k ≤ n) (P : Polyhedron m (n + 1)
   simp only [polyhedronProj] at h_cycle
   exact h_cycle.symm
 
-/- **Theorem 2: Correctness of iterated Fourier-Motzkin elimination**
-
+/- **Theorem 2: Correctness of iterated Fourier-Motzkin Elimination**
   The carrier of the resulting polyhedron equals the projection of P onto the first k coordinates.
 -/
 theorem correct_FourierMotzkin_iteration {m n k : Nat} (h : k ≤ n) (P : Polyhedron m n) :
@@ -1130,5 +1136,6 @@ theorem correct_FourierMotzkin_iteration {m n k : Nat} (h : k ≤ n) (P : Polyhe
         -- Use polyhedronProj_comp
         exact (polyhedronProj_comp h_le P).symm
 
--- For computable version: try ℚ, then lift to ℝ in analysis
--- FiniteField
+-- For computable version:
+-- (1) try `ℚ`, then lift to `ℝ` in analysis, or
+-- (2) work with `FiniteField`
