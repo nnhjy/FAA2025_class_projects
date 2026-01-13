@@ -15,7 +15,7 @@ defined when `h : k ≤ n`, by precomposition with `Fin.castLEEmb h`. -/
 def proj (k n : Nat) (h : k ≤ n) (x : Fin n → ℝ) : Fin k → ℝ :=
   fun i ↦ x ((Fin.castLEEmb h) i)
 
-notation: max "π_" k:arg => proj k _ _
+-- notation: max "π_" k:arg => proj k _ _
 
 /- A lemma about how `proj` acts on coordinates `i`: -/
 @[simp]

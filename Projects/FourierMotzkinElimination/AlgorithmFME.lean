@@ -27,15 +27,15 @@ namespace FourierMotzkinSet
 -/
 
 /- Positive-index set for the column `ℓ`: constraints with `A i ℓ > 0`. -/
-@[simp,grind] def Ipos {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) : Set (Fin m) :=
+def Ipos {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) : Set (Fin m) :=
   { i | 0 < P.A i ℓ }
 
 /- Negative-index set for the column `ℓ`: constraints with `A i ℓ < 0`. -/
-@[simp,grind] def Ineg {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) : Set (Fin m) :=
+def Ineg {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) : Set (Fin m) :=
   { i | P.A i ℓ < 0 }
 
 /- Zero-index set for the column `ℓ`: constraints with `A i ℓ = 0`. -/
-@[simp,grind] def Izero {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) : Set (Fin m) :=
+def Izero {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) : Set (Fin m) :=
   { i | P.A i ℓ = 0 }
 
 /- The eliminated set `Q ⊆ ℝ^n` obtained by eliminating variable `ℓ : Fin (n+1)`.
@@ -44,7 +44,7 @@ This is the standard FME output:
 - For every pair `(i+, i-) ∈ I+ × I-`, require
   `b_{i-}/a_{i-,ℓ} - Σ (a_{i-,j}/a_{i-,ℓ}) y_j ≥ b_{i+}/a_{i+,ℓ} - Σ (a_{i+,j}/a_{i+,ℓ}) y_j`.
 -/
-@[simp,grind] def elimIndexSet {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) :
+def elimIndexSet {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) :
     Set (Fin n → ℝ) :=
   let ι := dropIndex ℓ
   { y |
@@ -62,7 +62,7 @@ This is the standard FME output:
 
 /- Specialization: eliminate the **last** coordinate of `ℝ^{n+1}`,
 producing a set in `ℝ^n`. -/
-@[simp,grind] def elimLastSet {m n : Nat} (P : Polyhedron m (n+1)) : Set (Fin n → ℝ) :=
+def elimLastSet {m n : Nat} (P : Polyhedron m (n+1)) : Set (Fin n → ℝ) :=
   elimIndexSet P (Fin.last (n := n))
   -- Note: `Fin.last` is the index `⟨n, n < n+1⟩`.
 
