@@ -1,6 +1,7 @@
 import Projects.FourierMotzkinElimination.Common
 import Projects.FourierMotzkinElimination.Polyhedron
 import Projects.FourierMotzkinElimination.Projection
+import Mathlib.Analysis.Convex.Basic
 
 /- # Polyhedron is convex
 For any polyhedron `P`, its `carrier set` is convex in the sense of Mathlib's Convex definition.

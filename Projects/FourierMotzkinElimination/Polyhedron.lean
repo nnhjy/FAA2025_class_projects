@@ -3,9 +3,9 @@ import Projects.FourierMotzkinElimination.Common
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Matrix.Basic
 import Mathlib.Data.Fin.Basic
-import Mathlib.Analysis.Convex.Basic
 
-/- A polyhedron in `ℝ^n` described by linear inequalities `A x ≥ b`. -/
+/- **Definition 1. Polyhedron**
+  A polyhedron in `ℝ^n` described by linear inequalities `A x ≥ b`. -/
 structure Polyhedron (m n : Nat) where
   A : Matrix (Fin m) (Fin n) ℝ
   b : Fin m → ℝ

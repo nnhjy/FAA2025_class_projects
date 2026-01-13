@@ -9,6 +9,12 @@ import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Data.Real.Archimedean
 
 /- # Fourier–Motzkin Elimination (FME) algorithm -/
+namespace FourierMotzkinSet
+/- ## Naive Fourier-Motzkin Elimination procedure
+  - Input: a `Polyhedron`
+  - Output: a `Set` of index
+  - Only for FME procedure demo, not for correctness analysis
+-/
 
 /- Drops the coordinate `ℓ : Fin (n+1)`:
 it maps `Fin n` into `Fin (n+1)` skipping `ℓ`. -/
@@ -18,13 +24,6 @@ it maps `Fin n` into `Fin (n+1)` skipping `ℓ`. -/
 /- Or use the concept of embedding -/
 -- def dropIndexEmb {n : Nat} (ℓ : Fin (n+1)) : Fin n ↪ Fin (n+1) :=
 --   Fin.succAboveEmb ℓ
-
-namespace FourierMotzkinSet
-/- ## Naive Fourier-Motzkin Elimination procedure
-  - Input: a `Polyhedron`
-  - Output: a `Set` of index
-  - Only for FME procedure demo, not for correctness analysis
--/
 
 /- Positive-index set for the column `ℓ`: constraints with `A i ℓ > 0`. -/
 def Ipos {m n : Nat} (P : Polyhedron m (n+1)) (ℓ : Fin (n+1)) : Set (Fin m) :=
@@ -73,7 +72,7 @@ namespace FourierMotzkin
   - Input and output are both a `Polyhedron`
 -/
 
-/- **Indices partition based on coefficient of last variable (Algorithm 1 Step 2)** -/
+/- **Algorithm 1 Step 2: Indices partition based on coefficient of last variable** -/
 @[simp,grind]
 noncomputable
 def partitionIndices {m n : Nat} (hn : n > 0) (P : Polyhedron m n) :
@@ -92,7 +91,7 @@ def partitionIndices {m n : Nat} (hn : n > 0) (P : Polyhedron m n) :
     exact Nat.lt_trans h1 h2
   ⟩
 
-/- **Main step: eliminate xₙ to project from n to n-1 dimensions (Algorithm 1)**
+/- **Algorithm 1 Step 3&4: eliminate xₙ to project from n to n-1 dimensions**
   Given polyhedron P in ℝ^n defined by constraints:
     ∑_{j=1}^n a_{ij} x_j ≥ b_i, ∀ i ∈ [m]
 
@@ -214,7 +213,8 @@ end FourierMotzkin
 
 /- ## Helper definitions and lemmas -/
 
-/- **Verctor extension**: given `y ∈ ℝ^(n-1)` and `xₙ ∈ ℝ`, construct `x = ⟨y, xₙ⟩ ∈ ℝ^n` -/
+/- **Definition 4. Verctor extension**
+  Given `y ∈ ℝ^(n-1)` and `xₙ ∈ ℝ`, construct `x = ⟨y, xₙ⟩ ∈ ℝ^n` -/
 def extendVector {n : Nat} (hn : n > 0) (y : Fin (n - 1) → ℝ) (xₙ : ℝ) : Fin n → ℝ :=
   fun i ↦
     let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
@@ -309,7 +309,7 @@ lemma proj_apply_embedPred {n : Nat} (hn : n > 0) (x : Fin n → ℝ) (j : Fin (
   For each pair (i₊, i₋) ∈ I₊ × I₋,
         (b_{i₋} - ∑_{j=1}^{n-1} a_{i₋,j} · x_j) / a_{i₋,n} ≥
         (b_{i₊} - ∑_{j=1}^{n-1} a_{i₊,j} · x_j) / a_{i₊,n}
--/
+**Validity of statement (1.5) in the textual Algorithm 1 step 4** -/
 lemma derive_FM_inequality_base {n : Nat} (hn : n > 0)
     (a_pos a_neg : Fin n → ℝ) (b_pos b_neg : ℝ)
     (x : Fin n → ℝ) (y : Fin (n-1) → ℝ)
@@ -381,7 +381,7 @@ lemma derive_FM_inequality_base {n : Nat} (hn : n > 0)
   For each pair (i₊, i₋) ∈ I₊ × I₋,
         ∑_{j=1}^{n-1} (a_{i₊,n}·a_{i₋,j} - a_{i₋,n}·a_{i₊,j}) x_j
         ≥ a_{i₊,n}·b_{i₋} - a_{i₋,n}·b_{i₊}
--/
+**Lemma 1 conclusion** -/
 lemma derive_FM_inequality {n : Nat} (hn : n > 0)
     (a_pos a_neg : Fin n → ℝ) (b_pos b_neg : ℝ)
     (x : Fin n → ℝ) (y : Fin (n-1) → ℝ)
@@ -488,7 +488,8 @@ lemma partition_complete {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin 
   exact ⟨id, id, id⟩
 
 /- ## Core helper lemma 1 -/
-/- Given y satisfying Q's constraints, find bounds on the last coordinate xₙ -/
+/- **For direction (2) in the textual math. proof of Thorem 1**
+  Given y satisfying Q's constraints, find bounds on the last coordinate xₙ -/
 lemma find_feasible_xn {m n : Nat} (hn : n > 0) (P : Polyhedron m n)
     (y : Fin (n - 1) → ℝ) :
   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
@@ -793,7 +794,8 @@ lemma find_feasible_xn {m n : Nat} (hn : n > 0) (P : Polyhedron m n)
         exact h_zero i h_zero_coeff
 
 /- ## Core helper lemma 2 -/
-/- Simplify Q's constraints in terms of the partition -/
+/- **Statement (2.1) in the textual math. proof of Thorem 1**
+  Simplify Q's constraints in terms of the partition -/
 lemma Q_constraint_characterization {m n : Nat} (hn : n > 0) (P : Polyhedron m n)
     (y : Fin (n - 1) → ℝ) :
   let ⟨m', Q⟩ := FourierMotzkin.eliminationCycle hn P
@@ -949,7 +951,7 @@ lemma Q_constraint_characterization {m n : Nat} (hn : n > 0) (P : Polyhedron m n
 /- **Theorem 1: Correctness of single Fourier-Motzkin Elimination cycle**
   The carrier of Q equals the projection of P onto the first (n-1) coordinates.
 -/
-theorem correct_FourierMotzkin_cycle {m n : Nat} (hn : n > 0) (P : Polyhedron m n) :
+theorem correctFourierMotzkinCycle {m n : Nat} (hn : n > 0) (P : Polyhedron m n) :
   let ⟨_, Q⟩ := FourierMotzkin.eliminationCycle hn P
   let h : n - 1 ≤ n := Nat.sub_le n 1
   Q.carrier = polyhedronProj h P := by
@@ -959,6 +961,7 @@ theorem correct_FourierMotzkin_cycle {m n : Nat} (hn : n > 0) (P : Polyhedron m 
   constructor
 
   · -- Forward direction: Q.carrier → projection of P.carrier
+    -- **Direction (2) in the textual math. proof of Thorem 1**
     intro hy
     -- Get Q explicitly
     let ⟨_, Q⟩ := FourierMotzkin.eliminationCycle hn P
@@ -974,6 +977,7 @@ theorem correct_FourierMotzkin_cycle {m n : Nat} (hn : n > 0) (P : Polyhedron m 
     · exact (extendVector_proj hn y xₙ).symm
 
   · -- Backward direction: projection of P.carrier → Q.carrier
+    -- **Direction (1) in the textual math. proof of Thorem 1**
     intro ⟨x, hx, hyx⟩
     -- Apply the characterization in reverse
     apply (Q_constraint_characterization hn P y).mpr
@@ -1040,14 +1044,14 @@ lemma polyhedronProj_comp {m k n : Nat} (hk : k ≤ n) (P : Polyhedron m (n + 1)
   simp only [polyhedronProj]
   rw [setProj_comp hk]
   congr 1
-  have h_cycle := correct_FourierMotzkin_cycle (Nat.succ_pos n) P
+  have h_cycle := correctFourierMotzkinCycle (Nat.succ_pos n) P
   simp only [polyhedronProj] at h_cycle
   exact h_cycle.symm
 
 /- **Theorem 2: Correctness of iterated Fourier-Motzkin Elimination**
   The carrier of the resulting polyhedron equals the projection of P onto the first k coordinates.
 -/
-theorem correct_FourierMotzkin_iteration {m n k : Nat} (h : k ≤ n) (P : Polyhedron m n) :
+theorem correctFourierMotzkinIteration {m n k : Nat} (h : k ≤ n) (P : Polyhedron m n) :
   let ⟨_, Q⟩ := FourierMotzkin.eliminationIteration h P
   Q.carrier = polyhedronProj h P := by
   induction n generalizing m k with
