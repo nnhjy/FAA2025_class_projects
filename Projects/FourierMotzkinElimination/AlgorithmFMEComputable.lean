@@ -186,17 +186,17 @@ def exampleSquare2D : ComputablePolyhedron 4 2 :=
     b := ![0, 0, -1, -1] }
 
 -- Eliminate x₁ to project onto x₀ axis
-def projectedInterval :=
+def projectedIntervalFME :=
   ComputableFourierMotzkin.eliminationCycle (by omega : 2 > 0) exampleSquare2D
 
-#eval projectedInterval.1  -- Number of constraints in projected polyhedron
+#eval projectedIntervalFME.1  -- Number of constraints in projected polyhedron
 
 -- Test that a point in [0,1] satisfies the projected constraints
 def testPoint1D : Fin 1 → ℚ := ![1/2]
-#eval projectedInterval.2.mem testPoint1D  -- Should be true
+#eval projectedIntervalFME.2.mem testPoint1D  -- Should be true
 
 def testPoint1D_outside : Fin 1 → ℚ := ![2]
-#eval projectedInterval.2.mem testPoint1D_outside  -- Should be false
+#eval projectedIntervalFME.2.mem testPoint1D_outside  -- Should be false
 
 /- Example 2: Eliminate all variables to check feasibility
 
