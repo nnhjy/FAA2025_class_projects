@@ -456,37 +456,6 @@ lemma mem_partition_trichotomy {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i 
       push_neg at h1 h2
       linarith
 
-/- Helper: i is in I_pos iff coefficient is positive -/
-lemma mem_I_pos_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
-  let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
-  let (I_pos, _, _) := FourierMotzkin.partitionIndices hn P
-  i ∈ I_pos ↔ P.A i lastIdx > 0 := by
-  simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
-
-/- Helper: i is in I_neg iff coefficient is negative -/
-lemma mem_I_neg_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
-  let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
-  let (_, I_neg, _) := FourierMotzkin.partitionIndices hn P
-  i ∈ I_neg ↔ P.A i lastIdx < 0 := by
-  simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
-
-/- Helper: i is in I_zero iff coefficient is zero -/
-lemma mem_I_zero_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
-  let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
-  let (_, _, I_zero) := FourierMotzkin.partitionIndices hn P
-  i ∈ I_zero ↔ P.A i lastIdx = 0 := by
-  simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
-
-/- Helper: partition sets are disjoint and cover all indices -/
-lemma partition_complete {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
-  let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
-  let (I_pos, I_neg, I_zero) := FourierMotzkin.partitionIndices hn P
-  (i ∈ I_pos → P.A i lastIdx > 0) ∧
-  (i ∈ I_neg → P.A i lastIdx < 0) ∧
-  (i ∈ I_zero → P.A i lastIdx = 0) := by
-  simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
-  exact ⟨id, id, id⟩
-
 /- ## Core helper lemma 1 -/
 /- **For direction (2) in the textual math. proof of Thorem 1**
   Given y satisfying Q's constraints, find bounds on the last coordinate xₙ -/
@@ -1139,3 +1108,36 @@ theorem correctFourierMotzkinIteration {m n k : Nat} (h : k ≤ n) (P : Polyhedr
         rw [ih_applied]
         -- Use polyhedronProj_comp
         exact (polyhedronProj_comp h_le P).symm
+
+/- # Backup helper lemmas that are not used in the proof -/
+
+-- /- Helper: i is in I_pos iff coefficient is positive -/
+-- lemma mem_I_pos_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
+--   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
+--   let (I_pos, _, _) := FourierMotzkin.partitionIndices hn P
+--   i ∈ I_pos ↔ P.A i lastIdx > 0 := by
+--   simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
+
+-- /- Helper: i is in I_neg iff coefficient is negative -/
+-- lemma mem_I_neg_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
+--   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
+--   let (_, I_neg, _) := FourierMotzkin.partitionIndices hn P
+--   i ∈ I_neg ↔ P.A i lastIdx < 0 := by
+--   simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
+
+-- /- Helper: i is in I_zero iff coefficient is zero -/
+-- lemma mem_I_zero_iff {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
+--   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
+--   let (_, _, I_zero) := FourierMotzkin.partitionIndices hn P
+--   i ∈ I_zero ↔ P.A i lastIdx = 0 := by
+--   simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
+
+-- /- Helper: partition sets are disjoint and cover all indices -/
+-- lemma partition_complete {m n : Nat} (hn : n > 0) (P : Polyhedron m n) (i : Fin m) :
+--   let lastIdx : Fin n := ⟨n - 1, Nat.sub_lt hn (by omega)⟩
+--   let (I_pos, I_neg, I_zero) := FourierMotzkin.partitionIndices hn P
+--   (i ∈ I_pos → P.A i lastIdx > 0) ∧
+--   (i ∈ I_neg → P.A i lastIdx < 0) ∧
+--   (i ∈ I_zero → P.A i lastIdx = 0) := by
+--   simp only [FourierMotzkin.partitionIndices, Finset.mem_filter, Finset.mem_univ, true_and]
+--   exact ⟨id, id, id⟩
